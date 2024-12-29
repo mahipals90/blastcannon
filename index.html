@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blast Cannon</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen">
+        <div class="background-tiles"></div>
+        <img src="https://github.com/mahipals90/blastcannon/blob/main/blast-cannon.jpeg?raw=true" alt="Blast Cannon" class="game-logo">
+        <div class="high-score">
+            <img src="https://github.com/mahipals90/blastcannon/blob/main/winning-cup.png?raw=true" alt="Trophy" class="trophy-icon">
+            <span>Highest Score: <span id="highScore">0</span></span>
+        </div>
+        <button id="playButton" class="btn">Play</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-background-tiles"></div>
+        <div id="levelChangeNotification" class="hidden">
+            <div class="level-text">LEVEL</div>
+            <div class="level-number"></div>
+        </div>
+        <div id="gameHeader">
+            <div class="header-strip">
+                <div id="levelInfo">Level: <span id="currentLevel">1</span></div>
+                <div id="scoreInfo">Score: <span id="currentScore">0</span></div>
+                <div class="controls">
+                    <div class="button-container">
+                        <button id="pauseButton" class="btn">
+                            <img src="https://github.com/mahipals90/blastcannon/blob/main/pause-button.png?raw=true" alt="Pause" id="pauseIcon">
+                            <div id="pauseLine" class="hidden"></div>
+                        </button>
+                    </div>
+                    <button id="musicToggle" class="btn">
+                        <img src="https://github.com/mahipals90/blastcannon/blob/main/music-toggle.png?raw=true" alt="Music Toggle" id="musicIcon">
+                        <div id="musicLine" class="hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="fixCannonText">TAP TO FIX IT</div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <audio id="backgroundMusic" loop>
+        <source src="https://github.com/mahipals90/blastcannon/raw/refs/heads/main/game-sound.mp3" type="audio/mp3">
+    </audio>
+    <audio id="shootSound">
+        <source src="https://github.com/mahipals90/blastcannon/raw/refs/heads/main/fire-sound.mp3" type="audio/mp3">
+    </audio>
+    <audio id="explosionSound">
+        <source src="https://github.com/mahipals90/blastcannon/raw/refs/heads/main/explosion-sound.mp3" type="audio/mp3">
+    </audio>
+
+    <script src="game.js"></script>
+</body>
+</html>

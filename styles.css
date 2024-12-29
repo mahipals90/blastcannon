@@ -1,0 +1,348 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+.screen {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.hidden {
+    display: none;
+}
+
+#startScreen {
+    background: white;
+}
+
+.background-tiles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(#f0f0f0 1px, transparent 1px),
+        linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+.game-logo {
+    width: 300px;
+    max-width: 80%;
+    z-index: 1;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.high-score {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.5rem;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 25px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.trophy-icon {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.button-container {
+    position: relative;
+    display: inline-block;
+}
+
+.btn {
+    padding: 1rem 3rem;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 25px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+    z-index: 1;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+#musicToggle {
+    padding: 0.5rem;
+    border-radius: 50%;
+    position: relative;
+    background: transparent;
+}
+
+#musicIcon {
+    width: 40px;
+    height: 40px;
+}
+
+#musicLine {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 40px;
+    height: 3px;
+    background-color: red;
+    pointer-events: none;
+}
+
+#pauseButton {
+    padding: 0.5rem;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#pauseIcon {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+#pauseLine {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 40px;
+    height: 3px;
+    background-color: darkred;
+    pointer-events: none;
+}
+
+#gameScreen {
+    background: white;
+}
+
+.game-background-tiles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(#f0f0f0 1px, transparent 1px),
+        linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#gameHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+.header-strip {
+    background: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#levelInfo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
+}
+
+#scoreInfo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: black;
+    text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.cannon-frozen {
+    animation: blinkRed 0.5s infinite;
+}
+
+@keyframes blinkRed {
+    0% { filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0)); }
+    50% { filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8)); }
+    100% { filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0)); }
+}
+
+#fixCannonText {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ff0000;
+    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
+    display: none;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: pulseText 1s infinite;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+@keyframes pulseText {
+    0% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.1); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
+#levelChangeNotification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+#levelChangeNotification.show {
+    animation: levelChangeAnim 2s ease-in-out forwards;
+}
+
+.level-text {
+    font-size: 48px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8),
+                 0 0 20px rgba(255, 0, 0, 0.6),
+                 0 0 30px rgba(255, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.level-number {
+    font-size: 96px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8),
+                 0 0 20px rgba(255, 0, 0, 0.6),
+                 0 0 30px rgba(255, 0, 0, 0.4);
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+#levelChangeNotification.show .level-text {
+    animation: slideIn 0.5s ease-out forwards,
+               fadeOut 0.5s ease-in 1.5s forwards;
+}
+
+#levelChangeNotification.show .level-number {
+    animation: scaleIn 0.5s ease-out 0.3s forwards,
+               fadeOut 0.5s ease-in 1.5s forwards;
+}
+
+@keyframes levelChangeAnim {
+    0% {
+        visibility: visible;
+    }
+    100% {
+        visibility: hidden;
+    }
+}
+
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.score-popup {
+    color: #FFD700;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 1000;
+    animation: scorePopup 1s ease-out forwards;
+}
+
+@keyframes scorePopup {
+    0% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-50px);
+    }
+}
