@@ -67,9 +67,10 @@ class Game {
             ArrowLeft: false,
             ArrowRight: false
         };
+        this.targetX = null;
 
         // Event listeners
-        this.setupEventListeners();
+        this.initializeControls();
         
         // Start screen elements
         this.playButton = document.getElementById('playButton');
@@ -100,37 +101,59 @@ class Game {
         });
     }
 
-    setupEventListeners() {
-        document.addEventListener('keydown', (e) => {
-            if (this.keys.hasOwnProperty(e.key)) {
-                this.keys[e.key] = true;
-            }
+    initializeControls() {
+        // Touch controls for cannon movement and firing
+        let touchStartX = null;
+        let touchStartTime = null;
+        const tapThreshold = 200; // ms to distinguish between tap and drag
+
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartTime = Date.now();
+            
+            // Update cannon target position
+            const rect = this.canvas.getBoundingClientRect();
+            this.targetX = touch.clientX - rect.left - this.cannon.width / 2;
         });
 
-        document.addEventListener('keyup', (e) => {
-            if (this.keys.hasOwnProperty(e.key)) {
-                this.keys[e.key] = false;
-            }
-        });
-
-        this.canvas.addEventListener('mousemove', (e) => {
-            if (this.isPlaying && !this.isPaused && !this.cannonFrozen) {
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            
+            // Only move cannon if not frozen
+            if (!this.cannonFrozen) {
                 const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                this.cannon.x = Math.max(0, Math.min(this.canvas.width - this.cannon.width, mouseX - this.cannon.width / 2));
+                this.targetX = touch.clientX - rect.left - this.cannon.width / 2;
             }
         });
 
-        this.canvas.addEventListener('mousedown', (e) => {
-            if (this.isPlaying && !this.isPaused) {
-                if (this.cannonFrozen) {
-                    this.cannonUnfreezeClicks++;
-                    if (this.cannonUnfreezeClicks >= 5) {
-                        this.unfreezeCannon();
-                    }
-                } else {
-                    this.isFiring = true;
-                }
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const touchEndTime = Date.now();
+            
+            // If it was a quick tap and cannon isn't frozen, fire
+            if (touchEndTime - touchStartTime < tapThreshold && !this.cannonFrozen) {
+                this.isFiring = true;
+            }
+            
+            // Reset touch tracking
+            touchStartX = null;
+            touchStartTime = null;
+        });
+
+        // Mouse controls (keep these for desktop compatibility)
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!this.cannonFrozen) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.targetX = e.clientX - rect.left - this.cannon.width / 2;
+            }
+        });
+
+        this.canvas.addEventListener('mousedown', () => {
+            if (!this.cannonFrozen) {
+                this.isFiring = true;
             }
         });
 
@@ -138,13 +161,28 @@ class Game {
             this.isFiring = false;
         });
 
-        this.canvas.addEventListener('mouseleave', () => {
-            this.isFiring = false;
-        });
-
-        // Pause button
-        document.getElementById('pauseButton').addEventListener('click', () => {
-            this.togglePause();
+        // Handle cannon unfreezing
+        this.canvas.addEventListener('click', (e) => {
+            if (this.cannonFrozen) {
+                const rect = this.canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                
+                // Check if click is near the cannon
+                const cannonCenterX = this.cannon.x + this.cannon.width / 2;
+                const cannonCenterY = this.cannon.y + this.cannon.height / 2;
+                const distance = Math.sqrt(
+                    Math.pow(clickX - cannonCenterX, 2) + 
+                    Math.pow(clickY - cannonCenterY, 2)
+                );
+                
+                if (distance < this.cannon.width) {
+                    this.cannonUnfreezeClicks++;
+                    if (this.cannonUnfreezeClicks >= 5) {
+                        this.unfreezeCannon();
+                    }
+                }
+            }
         });
     }
 
@@ -163,6 +201,51 @@ class Game {
             setTimeout(() => {
                 this.cannon.flash = false;
             }, 200);
+        }
+    }
+
+    updateCannon() {
+        // Update invulnerability status
+        if (this.cannonInvulnerable) {
+            const currentTime = Date.now();
+            if (currentTime - this.cannonInvulnerableTimer >= this.cannonInvulnerableDuration) {
+                this.cannonInvulnerable = false;
+            }
+        }
+
+        // Check for ball collisions only if not invulnerable
+        if (!this.cannonInvulnerable) {
+            for (const ball of this.balls) {
+                const dx = (this.cannon.x + this.cannon.width / 2) - ball.x;
+                const dy = (this.cannon.y + this.cannon.height / 2) - ball.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < ball.radius + Math.min(this.cannon.width, this.cannon.height) / 2) {
+                    if (!this.cannonFrozen) {
+                        this.cannonFrozen = true;
+                        this.cannonHits++;
+                        this.fixCannonText.style.display = 'block';
+                    }
+                }
+            }
+        }
+
+        // Move cannon based on target position if not frozen
+        if (!this.cannonFrozen && this.targetX !== null) {
+            const dx = this.targetX - this.cannon.x;
+            this.cannon.x += dx * 0.2; // Smoother movement
+
+            // Keep cannon within canvas bounds
+            this.cannon.x = Math.max(0, Math.min(this.canvas.width - this.cannon.width, this.cannon.x));
+        }
+
+        // Handle automatic firing if active
+        if (this.isFiring && !this.cannonFrozen) {
+            const currentTime = Date.now();
+            if (currentTime - this.lastFireTime >= this.fireRate) {
+                this.shootProjectile();
+                this.lastFireTime = currentTime;
+            }
         }
     }
 
@@ -321,15 +404,7 @@ class Game {
     update() {
         if (this.isPaused) return;
 
-        // Update cannon position
-        if (!this.cannonFrozen) {
-            if (this.keys.ArrowLeft) {
-                this.cannon.x = Math.max(0, this.cannon.x - this.cannon.speed);
-            }
-            if (this.keys.ArrowRight) {
-                this.cannon.x = Math.min(this.canvas.width - this.cannon.width, this.cannon.x + this.cannon.speed);
-            }
-        }
+        this.updateCannon();
 
         // Update fix cannon text position
         if (this.cannonFrozen) {
@@ -339,39 +414,6 @@ class Game {
             this.fixCannonText.textContent = `TAP TO FIX IT (${5 - this.cannonUnfreezeClicks} TAPS LEFT)`;
         } else {
             this.fixCannonText.style.display = 'none';
-        }
-
-        // Handle continuous firing
-        const currentTime = Date.now();
-        if (this.isFiring && !this.cannonFrozen && currentTime - this.lastFireTime >= this.fireRate) {
-            this.shootProjectile();
-            this.lastFireTime = currentTime;
-        }
-
-        // Update invulnerability status
-        if (this.cannonInvulnerable) {
-            const currentTime = Date.now();
-            if (currentTime - this.cannonInvulnerableTimer >= this.cannonInvulnerableDuration) {
-                this.cannonInvulnerable = false;
-            }
-        }
-
-        // Check for ball collisions only if not invulnerable
-        if (!this.cannonInvulnerable) {
-            for (const ball of this.balls) {
-                const dx = (this.cannon.x + this.cannon.width / 2) - ball.x;
-                const dy = (this.cannon.y + this.cannon.height / 2) - ball.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < ball.radius + Math.min(this.cannon.width, this.cannon.height) / 2) {
-                    if (!this.cannonFrozen) {
-                        this.cannonFrozen = true;
-                        this.cannonHits++;
-                        this.fixCannonText.style.display = 'block';
-                        this.fixCannonText.textContent = 'TAP TO FIX IT';
-                    }
-                }
-            }
         }
 
         // Update projectiles

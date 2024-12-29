@@ -217,18 +217,22 @@ body {
 }
 
 #fixCannonText {
-    position: absolute;
+    position: fixed;
+    left: 50%;
+    bottom: 20%;
     transform: translateX(-50%);
-    font-size: 1.5rem;
-    font-weight: bold;
     color: #ff0000;
-    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
-    display: none;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    font-size: max(16px, min(24px, 5vw));
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 1000;
+    text-align: center;
     animation: pulseText 1s infinite;
-    z-index: 10;
     white-space: nowrap;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
 }
 
 @keyframes pulseText {
@@ -345,4 +349,45 @@ body {
         opacity: 0;
         transform: translateX(-50%) translateY(-50px);
     }
+}
+
+@media (max-width: 768px) {
+    #gameHeader {
+        padding: 5px;
+    }
+
+    .header-strip {
+        font-size: 14px;
+    }
+
+    #levelInfo, #scoreInfo {
+        margin: 0 5px;
+    }
+
+    .button {
+        width: 30px;
+        height: 30px;
+    }
+
+    #levelChangeNotification .level-text {
+        font-size: max(24px, min(48px, 8vw));
+    }
+
+    #levelChangeNotification .level-number {
+        font-size: max(48px, min(96px, 15vw));
+    }
+
+    .score-popup {
+        font-size: max(16px, min(24px, 5vw));
+    }
+}
+
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: none;
 }
