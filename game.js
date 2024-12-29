@@ -77,6 +77,18 @@ class Game {
         this.musicToggle = document.getElementById('musicToggle');
         this.startScreen = document.getElementById('startScreen');
         this.gameScreen = document.getElementById('gameScreen');
+        this.pauseButton = document.getElementById('pauseButton');
+        this.pauseButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.togglePause();
+        });
+
+        this.pauseButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.togglePause();
+        });
         
         // Initialize UI
         this.updateHighScore();
@@ -109,6 +121,8 @@ class Game {
 
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            if (this.isPaused) return;
+            
             const touch = e.touches[0];
             touchStartX = touch.clientX;
             touchStartTime = Date.now();
@@ -120,6 +134,8 @@ class Game {
 
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
+            if (this.isPaused) return;
+            
             const touch = e.touches[0];
             
             // Only move cannon if not frozen
@@ -131,11 +147,17 @@ class Game {
 
         this.canvas.addEventListener('touchend', (e) => {
             e.preventDefault();
+            
+            // Stop firing when touch ends
+            this.isFiring = false;
+            
+            if (this.isPaused) return;
+            
             const touchEndTime = Date.now();
             
-            // If it was a quick tap and cannon isn't frozen, fire
+            // If it was a quick tap and cannon isn't frozen, fire once
             if (touchEndTime - touchStartTime < tapThreshold && !this.cannonFrozen) {
-                this.isFiring = true;
+                this.shootProjectile();
             }
             
             // Reset touch tracking
@@ -145,45 +167,53 @@ class Game {
 
         // Mouse controls (keep these for desktop compatibility)
         this.canvas.addEventListener('mousemove', (e) => {
-            if (!this.cannonFrozen) {
-                const rect = this.canvas.getBoundingClientRect();
-                this.targetX = e.clientX - rect.left - this.cannon.width / 2;
-            }
+            if (this.isPaused || this.cannonFrozen) return;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            this.targetX = e.clientX - rect.left - this.cannon.width / 2;
         });
 
-        this.canvas.addEventListener('mousedown', () => {
-            if (!this.cannonFrozen) {
-                this.isFiring = true;
-            }
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (this.isPaused || this.cannonFrozen) return;
+            this.isFiring = true;
         });
 
         this.canvas.addEventListener('mouseup', () => {
             this.isFiring = false;
         });
 
+        this.canvas.addEventListener('mouseleave', () => {
+            this.isFiring = false;
+        });
+
         // Handle cannon unfreezing
-        this.canvas.addEventListener('click', (e) => {
-            if (this.cannonFrozen) {
-                const rect = this.canvas.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const clickY = e.clientY - rect.top;
-                
-                // Check if click is near the cannon
-                const cannonCenterX = this.cannon.x + this.cannon.width / 2;
-                const cannonCenterY = this.cannon.y + this.cannon.height / 2;
-                const distance = Math.sqrt(
-                    Math.pow(clickX - cannonCenterX, 2) + 
-                    Math.pow(clickY - cannonCenterY, 2)
-                );
-                
-                if (distance < this.cannon.width) {
-                    this.cannonUnfreezeClicks++;
-                    if (this.cannonUnfreezeClicks >= 5) {
-                        this.unfreezeCannon();
-                    }
+        const handleUnfreeze = (e) => {
+            if (!this.cannonFrozen) return;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const y = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            const clickX = x - rect.left;
+            const clickY = y - rect.top;
+            
+            // Check if click/tap is near the cannon
+            const cannonCenterX = this.cannon.x + this.cannon.width / 2;
+            const cannonCenterY = this.cannon.y + this.cannon.height / 2;
+            const distance = Math.sqrt(
+                Math.pow(clickX - cannonCenterX, 2) + 
+                Math.pow(clickY - cannonCenterY, 2)
+            );
+            
+            if (distance < this.cannon.width) {
+                this.cannonUnfreezeClicks++;
+                if (this.cannonUnfreezeClicks >= 5) {
+                    this.unfreezeCannon();
                 }
             }
-        });
+        };
+
+        this.canvas.addEventListener('click', handleUnfreeze);
+        this.canvas.addEventListener('touchstart', handleUnfreeze);
     }
 
     unfreezeCannon() {
@@ -252,10 +282,13 @@ class Game {
     togglePause() {
         this.isPaused = !this.isPaused;
         const pauseLine = document.getElementById('pauseLine');
+        
         if (this.isPaused) {
-            pauseLine.classList.remove('hidden');
+            pauseLine.style.display = 'block';
+            // Stop firing when paused
+            this.isFiring = false;
         } else {
-            pauseLine.classList.add('hidden');
+            pauseLine.style.display = 'none';
         }
     }
 

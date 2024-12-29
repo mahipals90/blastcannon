@@ -224,15 +224,17 @@ body {
     color: #ff0000;
     font-size: max(16px, min(24px, 5vw));
     font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 
+        -2px -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 2px 0 #000,
+        2px 2px 0 #000;
     pointer-events: none;
     z-index: 1000;
     text-align: center;
     animation: pulseText 1s infinite;
     white-space: nowrap;
     padding: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
 }
 
 @keyframes pulseText {
