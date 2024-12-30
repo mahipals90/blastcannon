@@ -229,8 +229,6 @@ body {
     z-index: 1000;
     text-align: center;
     padding: 15px;
-    background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
     white-space: nowrap;
     -webkit-user-select: none;
     user-select: none;
