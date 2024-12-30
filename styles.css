@@ -217,16 +217,23 @@ body {
 }
 
 #fixCannonText {
-    position: absolute;
-    top: 50%;
+    position: fixed;
     left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    color: #ff0000;
-    text-shadow: 2px 2px 2px #000000;
-    z-index: 10;
+    bottom: 20%;
+    transform: translateX(-50%);
+    color: red;
+    text-shadow: 2px 2px 2px black;
+    font-size: clamp(24px, 6vw, 36px);
+    font-weight: bold;
     pointer-events: none;
-    display: none;
+    z-index: 1000;
+    text-align: center;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 #levelChangeNotification {
