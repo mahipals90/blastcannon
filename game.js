@@ -114,55 +114,42 @@ class Game {
     }
 
     initializeControls() {
-        // Touch controls for cannon movement and firing
-        let touchStartX = null;
-        let touchStartTime = null;
-        const tapThreshold = 200; // ms to distinguish between tap and drag
-
+        // Touch controls
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (this.isPaused) return;
-            
             const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartTime = Date.now();
-            
-            // Update cannon target position
             const rect = this.canvas.getBoundingClientRect();
-            this.targetX = touch.clientX - rect.left - this.cannon.width / 2;
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            // Check if touch is on cannon
+            if (this.isPointOnCannon(x, y)) {
+                if (this.cannonFrozen) {
+                    this.handleCannonUnfreeze();
+                } else {
+                    this.isFiring = true;
+                }
+            } else {
+                this.targetX = x;
+            }
         });
 
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if (this.isPaused) return;
-            
             const touch = e.touches[0];
-            
-            // Only move cannon if not frozen
-            if (!this.cannonFrozen) {
-                const rect = this.canvas.getBoundingClientRect();
-                this.targetX = touch.clientX - rect.left - this.cannon.width / 2;
+            const rect = this.canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            if (!this.isPointOnCannon(x, y)) {
+                this.isFiring = false;
+                this.targetX = x;
             }
         });
 
-        this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            
-            // Stop firing when touch ends
+        this.canvas.addEventListener('touchend', () => {
             this.isFiring = false;
-            
-            if (this.isPaused) return;
-            
-            const touchEndTime = Date.now();
-            
-            // If it was a quick tap and cannon isn't frozen, fire once
-            if (touchEndTime - touchStartTime < tapThreshold && !this.cannonFrozen) {
-                this.shootProjectile();
-            }
-            
-            // Reset touch tracking
-            touchStartX = null;
-            touchStartTime = null;
+            this.targetX = null;
         });
 
         // Mouse controls (keep these for desktop compatibility)
