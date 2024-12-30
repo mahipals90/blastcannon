@@ -117,6 +117,7 @@ class Game {
         // Touch controls for cannon movement and firing
         let touchStartX = null;
         let touchStartTime = null;
+        let isTouchingCannon = false;
         const tapThreshold = 200; // ms to distinguish between tap and drag
 
         this.canvas.addEventListener('touchstart', (e) => {
@@ -127,9 +128,27 @@ class Game {
             touchStartX = touch.clientX;
             touchStartTime = Date.now();
             
-            // Update cannon target position
+            // Get touch position relative to canvas
             const rect = this.canvas.getBoundingClientRect();
-            this.targetX = touch.clientX - rect.left - this.cannon.width / 2;
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            
+            // Check if touch is on cannon
+            const cannonCenterX = this.cannon.x + this.cannon.width / 2;
+            const cannonCenterY = this.cannon.y + this.cannon.height / 2;
+            const distance = Math.sqrt(
+                Math.pow(touchX - cannonCenterX, 2) + 
+                Math.pow(touchY - cannonCenterY, 2)
+            );
+            
+            // If touch is within cannon area, start firing
+            if (distance < this.cannon.width * 1.5 && !this.cannonFrozen) {
+                isTouchingCannon = true;
+                this.isFiring = true;
+            }
+            
+            // Update cannon target position
+            this.targetX = touchX - this.cannon.width / 2;
         });
 
         this.canvas.addEventListener('touchmove', (e) => {
@@ -137,11 +156,26 @@ class Game {
             if (this.isPaused) return;
             
             const touch = e.touches[0];
+            const rect = this.canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            
+            // Check if touch is still on cannon
+            const cannonCenterX = this.cannon.x + this.cannon.width / 2;
+            const cannonCenterY = this.cannon.y + this.cannon.height / 2;
+            const distance = Math.sqrt(
+                Math.pow(touchX - cannonCenterX, 2) + 
+                Math.pow(touchY - cannonCenterY, 2)
+            );
+            
+            // Update firing state based on whether touch is still on cannon
+            if (isTouchingCannon) {
+                this.isFiring = distance < this.cannon.width * 1.5;
+            }
             
             // Only move cannon if not frozen
             if (!this.cannonFrozen) {
-                const rect = this.canvas.getBoundingClientRect();
-                this.targetX = touch.clientX - rect.left - this.cannon.width / 2;
+                this.targetX = touchX - this.cannon.width / 2;
             }
         });
 
@@ -149,18 +183,14 @@ class Game {
             e.preventDefault();
             
             // Stop firing when touch ends
-            this.isFiring = false;
+            if (isTouchingCannon) {
+                this.isFiring = false;
+                isTouchingCannon = false;
+            }
             
             if (this.isPaused) return;
             
             const touchEndTime = Date.now();
-            
-            // If it was a quick tap and cannon isn't frozen, fire once
-            if (touchEndTime - touchStartTime < tapThreshold && !this.cannonFrozen) {
-                this.shootProjectile();
-            }
-            
-            // Reset touch tracking
             touchStartX = null;
             touchStartTime = null;
         });
@@ -175,7 +205,22 @@ class Game {
 
         this.canvas.addEventListener('mousedown', (e) => {
             if (this.isPaused || this.cannonFrozen) return;
-            this.isFiring = true;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Check if click is on cannon
+            const cannonCenterX = this.cannon.x + this.cannon.width / 2;
+            const cannonCenterY = this.cannon.y + this.cannon.height / 2;
+            const distance = Math.sqrt(
+                Math.pow(mouseX - cannonCenterX, 2) + 
+                Math.pow(mouseY - cannonCenterY, 2)
+            );
+            
+            if (distance < this.cannon.width * 1.5) {
+                this.isFiring = true;
+            }
         });
 
         this.canvas.addEventListener('mouseup', () => {
