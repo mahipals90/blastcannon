@@ -16,9 +16,10 @@ class Game {
         this.isFiring = false;
         this.lastFireTime = 0;
         this.fireRate = 200; // Time between shots in milliseconds
-        this.maxBallsOnScreen = 10;
+        // Check if device is mobile
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.maxBallsOnScreen = this.isMobile ? 6 : 10; // 6 balls for mobile, 10 for desktop
         this.cannonFrozen = false;
-        this.cannonHits = 0;
         this.cannonUnfreezeClicks = 0;
         this.fixCannonText = document.getElementById('fixCannonText');
         this.levelChangeNotification = document.getElementById('levelChangeNotification');
@@ -450,29 +451,33 @@ class Game {
     spawnBalls() {
         if (!this.isPlaying) return;
 
+        // Adjust spawn rate based on device type
+        const spawnDelay = this.isMobile ? 800 : 500; // Slower spawn rate on mobile
+
         // Only spawn new balls if we're under the limit
         if (this.balls.length >= this.maxBallsOnScreen) {
-            setTimeout(() => this.spawnBalls(), 500); // Check again in 500ms
+            setTimeout(() => this.spawnBalls(), spawnDelay);
             return;
         }
 
+        // Calculate ball properties based on level and device type
+        const baseSpeed = this.isMobile ? 2 : 3;
+        const speedMultiplier = this.isMobile ? 0.8 : 1;
+        const speed = (baseSpeed + (this.level * 0.5)) * speedMultiplier;
+        
+        const radius = Math.random() * (30 - 15) + 15;
+        const x = Math.random() * (this.canvas.width - radius * 2) + radius;
+        
         const ball = {
-            x: Math.random() * (this.canvas.width - 40) + 20,
-            y: -20,
-            number: Math.floor(Math.random() * 16) + 1,
-            hits: 0,
-            speed: 1 + (this.level * 0.1),
-            dx: (Math.random() - 0.5) * 2,
-            dy: 1 + (this.level * 0.1),
-            showHitNumber: false,
-            hitNumberTimer: 0
+            x: x,
+            y: -radius,
+            radius: radius,
+            dx: (Math.random() - 0.5) * speed,
+            dy: speed,
+            color: `hsl(${Math.random() * 360}, 70%, 50%)`
         };
-        ball.radius = 15 + ball.number * 2;
         
         this.balls.push(ball);
-
-        // Adjust spawn rate based on current ball count
-        const spawnDelay = 2000 / Math.sqrt(this.level);
         setTimeout(() => this.spawnBalls(), spawnDelay);
     }
 
