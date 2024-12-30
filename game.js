@@ -16,10 +16,9 @@ class Game {
         this.isFiring = false;
         this.lastFireTime = 0;
         this.fireRate = 200; // Time between shots in milliseconds
-        // Check if device is mobile
-        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        this.maxBallsOnScreen = this.isMobile ? 6 : 10; // 6 balls for mobile, 10 for desktop
+        this.maxBallsOnScreen = 6; // Changed from 10 to 6
         this.cannonFrozen = false;
+        this.cannonHits = 0;
         this.cannonUnfreezeClicks = 0;
         this.fixCannonText = document.getElementById('fixCannonText');
         this.levelChangeNotification = document.getElementById('levelChangeNotification');
@@ -451,33 +450,36 @@ class Game {
     spawnBalls() {
         if (!this.isPlaying) return;
 
-        // Adjust spawn rate based on device type
-        const spawnDelay = this.isMobile ? 800 : 500; // Slower spawn rate on mobile
-
         // Only spawn new balls if we're under the limit
         if (this.balls.length >= this.maxBallsOnScreen) {
-            setTimeout(() => this.spawnBalls(), spawnDelay);
+            setTimeout(() => this.spawnBalls(), 500); // Check again in 500ms
             return;
         }
 
-        // Calculate ball properties based on level and device type
-        const baseSpeed = this.isMobile ? 2 : 3;
-        const speedMultiplier = this.isMobile ? 0.8 : 1;
-        const speed = (baseSpeed + (this.level * 0.5)) * speedMultiplier;
-        
-        const radius = Math.random() * (30 - 15) + 15;
-        const x = Math.random() * (this.canvas.width - radius * 2) + radius;
-        
+        // Calculate how many balls we can spawn
+        const availableSlots = this.maxBallsOnScreen - this.balls.length;
+        if (availableSlots <= 0) return;
+
         const ball = {
-            x: x,
-            y: -radius,
-            radius: radius,
-            dx: (Math.random() - 0.5) * speed,
-            dy: speed,
-            color: `hsl(${Math.random() * 360}, 70%, 50%)`
+            x: Math.random() * (this.canvas.width - 40) + 20,
+            y: -20,
+            number: Math.floor(Math.random() * 16) + 1,
+            hits: 0,
+            speed: 1 + (this.level * 0.1),
+            dx: (Math.random() - 0.5) * 2,
+            dy: 1 + (this.level * 0.1),
+            showHitNumber: false,
+            hitNumberTimer: 0
         };
+        ball.radius = 15 + ball.number * 2;
         
         this.balls.push(ball);
+
+        // Adjust spawn rate based on level and available slots
+        const baseSpawnDelay = 2000;
+        const levelFactor = Math.max(0.5, 1 / Math.sqrt(this.level));
+        const spawnDelay = baseSpawnDelay * levelFactor;
+        
         setTimeout(() => this.spawnBalls(), spawnDelay);
     }
 
@@ -500,20 +502,13 @@ class Game {
 
         this.updateCannon();
 
-        // Update fix cannon text position
-        if (this.cannonFrozen) {
-            this.fixCannonText.style.left = (this.cannon.x + this.cannon.width / 2) + 'px';
-            this.fixCannonText.style.top = (this.cannon.y - 30) + 'px';
-            this.fixCannonText.style.display = 'block';
-            this.fixCannonText.textContent = `TAP TO FIX IT (${5 - this.cannonUnfreezeClicks} TAPS LEFT)`;
-        } else {
-            this.fixCannonText.style.display = 'none';
-        }
-
         // Update projectiles
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
-            this.projectiles[i].y -= this.projectiles[i].speed;
-            if (this.projectiles[i].y < 0) {
+            const projectile = this.projectiles[i];
+            projectile.y -= projectile.speed;
+            
+            // Remove projectiles that are off screen
+            if (projectile.y + projectile.radius < 0) {
                 this.projectiles.splice(i, 1);
             }
         }
@@ -522,7 +517,7 @@ class Game {
         for (let i = this.balls.length - 1; i >= 0; i--) {
             const ball = this.balls[i];
             
-            // Update position
+            // Update ball position
             ball.x += ball.dx;
             ball.y += ball.dy;
             
@@ -531,18 +526,19 @@ class Game {
                 ball.dx *= -1;
             }
             
-            // Bounce off bottom
-            if (ball.y + ball.radius > this.canvas.height) {
-                ball.dy = -Math.abs(ball.dy); // Ensure upward movement
-                ball.dx = (Math.random() - 0.5) * 4; // Random horizontal direction
+            // Remove balls that are off screen at the bottom
+            if (ball.y - ball.radius > this.canvas.height) {
+                this.balls.splice(i, 1);
+                continue;
             }
-            
-            // Return to top if ball goes too high
-            if (ball.y + ball.radius < -100) {
-                ball.y = -ball.radius;
-                ball.x = Math.random() * (this.canvas.width - ball.radius * 2) + ball.radius;
-                ball.dy = Math.abs(ball.dy); // Ensure downward movement
-                ball.dx = (Math.random() - 0.5) * 2; // New random horizontal direction
+        }
+
+        // Update hit number animations
+        for (let i = this.hitNumbers.length - 1; i >= 0; i--) {
+            const hitNumber = this.hitNumbers[i];
+            hitNumber.timer--;
+            if (hitNumber.timer <= 0) {
+                this.hitNumbers.splice(i, 1);
             }
         }
 
